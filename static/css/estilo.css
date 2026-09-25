@@ -13,7 +13,7 @@
   --error-fondo: #fdecea;  --error-texto: #8e1b10;
   --ok-fondo: #e6f4ec;     --ok-texto: #17643c;
   /* un color por equipo */
-  --deimos: #2a66d9;  --phobos: #7a45c9;  --kova: #0a7a6e;
+  --deimos: #8a0ef6;  --phobos: #eb7216;  --kova: #b35aad;
 }
 
 * { box-sizing: border-box; }
@@ -98,6 +98,10 @@ h2 { font-size: 1.15rem; margin: 0 0 .4rem; }
 .franja i.phobos { background: var(--phobos); }
 .franja i.kova   { background: var(--kova); }
 
+.logo {
+  width: 50px;      
+  height: auto;      
+}
 /* ---- Tarjetas y formularios ---- */
 .tarjeta { background: var(--superficie); border: 1px solid var(--borde); border-radius: 10px; padding: 1.5rem; }
 .tarjeta.login, .tarjeta.formulario { max-width: 420px; }

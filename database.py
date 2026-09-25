@@ -265,7 +265,7 @@ def _crear_coach_inicial(conexion):
         )
         print("\n" + "=" * 56)
         print(" PRIMER ARRANQUE - cuenta de Coach creada")
-        print("   Usuario:               coach")
+        print("   Usuario:               Fernando")
         print("   Contraseña inicial:    Devolt9134")
         print(" Se pedirá cambiarla al iniciar sesión.")
         print("=" * 56 + "\n")
