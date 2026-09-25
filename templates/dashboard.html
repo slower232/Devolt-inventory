@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block titulo %}Dashboard - Devolt Inventory{% endblock %}
+{% block contenido %}
+<h1>Hola, {{ session.nombre }}</h1>
+<p><span class="etiqueta">{{ session.rol|capitalize }}</span>{% if session.equipo_nombre %}<span class="etiqueta {{ session.equipo_nombre.split(' ')[-1]|lower }}">{{ session.equipo_nombre }}</span>{% endif %}</p>
+
+<div class="resumen-grid cuatro">
+  <a class="tarjeta resumen" href="{{ url_for('inventario.lista') }}"><span class="suave">Tipos de piezas</span><strong>{{ resumen.piezas }}</strong><span>Ver inventario →</span></a>
+  <a class="tarjeta resumen" href="{{ url_for('inventario.lista') }}"><span class="suave">Unidades disponibles</span><strong>{{ resumen.unidades_disponibles }}</strong><span>Consultar stock →</span></a>
+  <a class="tarjeta resumen" href="{{ url_for('inventario.solicitudes') }}"><span class="suave">Solicitudes de piezas</span><strong>{{ resumen.solicitudes_pendientes }}</strong><span>Ver solicitudes →</span></a>
+  <a class="tarjeta resumen" href="{{ url_for('inventario.solicitudes_compra') }}"><span class="suave">Solicitudes de compra</span><strong>{{ resumen.compras_pendientes }}</strong><span>Ver compras →</span></a>
+</div>
+
+<section class="tarjeta" style="margin-top:1rem">
+  <h2>Inventario</h2>
+  {% if session.rol in ('mentor', 'coach') %}
+  <p class="suave">Registra piezas, consulta el stock, procesa devoluciones y atiende solicitudes.</p>
+  <div class="fila-botones"><a class="boton" href="{{ url_for('inventario.nuevo') }}">Agregar pieza</a><a class="boton secundario" href="{{ url_for('inventario.lista') }}">Ver inventario</a></div>
+  {% else %}
+  <p class="suave">Consulta las piezas disponibles, agrega piezas que tu equipo ya tiene, solicita piezas del stock y pide compras cuando una pieza no está disponible.</p>
+  <div class="fila-botones"><a class="boton" href="{{ url_for('inventario.lista') }}">Ver inventario</a><a class="boton secundario" href="{{ url_for('inventario.nuevo') }}">Agregar pieza nueva</a><a class="boton secundario" href="{{ url_for('inventario.nueva_solicitud_compra') }}">Solicitar una compra</a></div>
+  {% endif %}
+</section>
+{% endblock %}

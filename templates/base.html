@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block titulo %}Devolt Inventory{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/estilo.css') }}">
+</head>
+<body>
+{% if session.usuario_id %}
+<header class="barra-superior">
+  <div class="barra-contenedor">
+    <a class="marca" href="{{ url_for('dashboard.inicio') }}" aria-label="Ir al dashboard">
+      <span class="franja" aria-hidden="true"><i class="deimos"></i><i class="phobos"></i><i class="kova"></i></span>
+      <span class="marca-texto">Devolt <strong>Inventory</strong></span>
+    </a>
+
+    <nav class="nav-principal" aria-label="Navegación principal">
+      <a href="{{ url_for('dashboard.inicio') }}"
+         class="{{ 'activo' if request.endpoint == 'dashboard.inicio' }}">Inicio</a>
+      <a href="{{ url_for('inventario.lista') }}"
+         class="{{ 'activo' if request.endpoint and request.endpoint.startswith('inventario.') and not request.endpoint.startswith('inventario.solicitudes') and not request.endpoint.startswith('inventario.nueva_solicitud_compra') }}">Inventario</a>
+      <a href="{{ url_for('inventario.solicitudes') }}"
+         class="{{ 'activo' if request.endpoint == 'inventario.solicitudes' }}">Solicitudes</a>
+      <a href="{{ url_for('inventario.solicitudes_compra') }}"
+         class="{{ 'activo' if request.endpoint and (request.endpoint.startswith('inventario.solicitudes_compra') or request.endpoint == 'inventario.nueva_solicitud_compra') }}">Compras</a>
+      {% if session.rol in ('mentor', 'coach') %}
+      <a href="{{ url_for('historial.lista') }}"
+         class="{{ 'activo' if request.endpoint and request.endpoint.startswith('historial.') }}">Historial</a>
+      {% endif %}
+      {% if session.rol in ('mentor', 'coach') %}
+      <a href="{{ url_for('configuracion.inicio') }}"
+         class="{{ 'activo' if request.endpoint and request.endpoint.startswith('configuracion.') }}">Configuración</a>
+      {% endif %}
+      {% if session.rol == 'coach' %}
+      <a href="{{ url_for('usuarios.lista') }}"
+         class="{{ 'activo' if request.endpoint and request.endpoint.startswith('usuarios.') }}">Usuarios</a>
+      {% endif %}
+    </nav>
+
+    <details class="cuenta-menu">
+      <summary>
+        <span class="cuenta-avatar">{{ session.nombre[:1]|upper }}</span>
+        <span class="cuenta-info">
+          <strong>{{ session.nombre }}</strong>
+          <small>{{ session.rol|capitalize }}{% if session.equipo_nombre %} · {{ session.equipo_nombre }}{% endif %}</small>
+        </span>
+        <span class="cuenta-flecha" aria-hidden="true">⌄</span>
+      </summary>
+      <div class="cuenta-dropdown">
+        <a href="{{ url_for('auth.cambiar_password') }}">Mi contraseña</a>
+        <a href="{{ url_for('auth.logout') }}">Cerrar sesión</a>
+      </div>
+    </details>
+  </div>
+</header>
+{% endif %}
+
+<div class="{{ 'layout' if session.usuario_id else 'pagina-sola' }}">
+  <main class="contenido">
+    {% with mensajes = get_flashed_messages(with_categories=true) %}
+      {% for categoria, texto in mensajes %}
+        <div class="aviso {{ categoria }}" role="alert">{{ texto }}</div>
+      {% endfor %}
+    {% endwith %}
+
+    {% block contenido %}{% endblock %}
+  </main>
+</div>
+</body>
+</html>

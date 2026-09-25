@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block titulo %}Solicitudes de compra - Devolt Inventory{% endblock %}
+{% block contenido %}
+<div class="encabezado-pagina">
+  <div>
+    <h1>Solicitudes de compra</h1>
+    <p class="suave">{% if session.rol == 'alumno' %}Solicitudes de compra de {{ session.equipo_nombre }}.{% else %}Peticiones de compra de todos los equipos.{% endif %}</p>
+  </div>
+  {% if session.rol == 'alumno' %}<a class="boton" href="{{ url_for('inventario.nueva_solicitud_compra') }}">+ Solicitar compra</a>{% endif %}
+</div>
+
+<div class="tarjeta tabla-contenedor">
+  <div class="tabla<s-scroll">
+    <table class="tabla">
+      <thead><tr><th>Fecha</th><th>Equipo</th><th>Pieza</th><th>Cantidad</th><th>Costo est.</th><th>Estado</th><th>Acción</th></tr></thead>
+      <tbody>
+      {% for s in solicitudes %}
+      <tr>
+        <td>{{ s.fecha_solicitud|fecha }}</td>
+        <td>{{ s.equipo_nombre }}<br><span class="suave">{{ s.solicitante_nombre }}</span></td>
+        <td><strong>{{ s.nombre }}</strong><br><span class="suave">{{ s.sku or 'Sin SKU' }}{% if s.marca_nombre %} · {{ s.marca_nombre }}{% endif %}</span></td>
+        <td>{{ s.cantidad }}</td>
+        <td>${{ '%.2f'|format(s.costo_unitario_estimado) }}</td>
+        <td>
+          <span class="estado {{ 'activo' if s.estado in ('aprobada','recibida') else ('inactivo' if s.estado == 'rechazada' else '') }}">{{ s.estado|capitalize }}</span>
+          {% if s.motivo_rechazo %}<br><span class="suave">{{ s.motivo_rechazo }}</span>{% endif %}
+        </td>
+        <td>
+          {% if session.rol in ('mentor','coach') %}
+            {% if s.estado == 'pendiente' %}
+            <form method="post" action="{{ url_for('inventario.resolver_solicitud_compra', solicitud_id=s.id) }}" class="acciones">
+              <input name="motivo" maxlength="200" placeholder="Motivo si rechazas" aria-label="Motivo del rechazo">
+              <button class="boton pequeno" name="accion" value="aprobar">Aprobar</button>
+              <button class="boton pequeno peligro" name="accion" value="rechazar">Rechazar</button>
+            </form>
+            {% elif s.estado == 'aprobada' %}
+            <form method="post" action="{{ url_for('inventario.marcar_comprada', solicitud_id=s.id) }}"><button class="boton pequeno" type="submit">Marcar comprada</button></form>
+            {% elif s.estado == 'comprada' %}
+            <form method="post" action="{{ url_for('inventario.marcar_recibida', solicitud_id=s.id) }}"><button class="boton pequeno" type="submit">Marcar recibida</button></form>
+            {% else %}—{% endif %}
+          {% else %}—{% endif %}
+          {% if s.link %}<br><a class="suave" href="{{ s.link }}" target="_blank" rel="noopener noreferrer">Ver enlace</a>{% endif %}
+          {% if s.motivo %}<br><span class="suave">{{ s.motivo }}</span>{% endif %}
+        </td>
+      </tr>
+      {% else %}<tr><td colspan="7" class="suave">No hay solicitudes de compra.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% if session.rol in ('mentor','coach') %}
+<div class="tarjeta" style="margin-top:1rem">
+  <p class="suave"><strong>Importante:</strong> al marcar una compra como recibida, 
+    el sistema actualiza el inventario en ese momento. Si la pieza ya existe, 
+    suma la cantidad; si era una pieza nueva, crea automáticamente su ficha 
+    y la asigna al equipo solicitante. La ubicación puede completarse al final.</p>
+</div>
+{% endif %}
+{% endblock %}

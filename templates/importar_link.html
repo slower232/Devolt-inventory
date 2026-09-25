@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block titulo %}Importar pieza - Devolt Inventory{% endblock %}
+{% block contenido %}
+<div class="encabezado-pagina">
+  <div>
+    <h1>Importar pieza desde goBILDA</h1>
+    <p class="suave">Pega el enlace de una página de producto. El sistema intentará obtener automáticamente nombre, SKU, precio, imagen y categoría.</p>
+  </div>
+</div>
+
+<div class="tarjeta formulario-amplio">
+  {% for error in errores %}<div class="aviso error" role="alert">{{ error }}</div>{% endfor %}
+
+  <form method="post" action="{{ url_for('inventario.importar_link') }}">
+    <label for="enlace">Enlace del producto</label>
+    <input id="enlace" name="enlace" type="text" autocomplete="off" required
+           value="{{ enlace or '' }}"
+           placeholder="https://www.gobilda.com/5203-series-yellow-jacket-...">
+    <p class="ayuda">Por ahora la importación automática está habilitada para goBILDA. Si la página no se puede leer, puedes usar «Agregar manualmente».</p>
+
+    <div class="fila-botones">
+      <button class="boton" type="submit">Importar información</button>
+      <a class="boton secundario" href="{{ url_for('inventario.lista') }}">Cancelar</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

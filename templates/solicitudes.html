@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block titulo %}Solicitudes - Devolt Inventory{% endblock %}
+{% block contenido %}
+<div class="encabezado-pagina"><div><h1>Solicitudes</h1><p class="suave">{% if session.rol == 'alumno' %}Tus solicitudes de piezas.{% else %}Solicitudes de los equipos.{% endif %}</p></div></div>
+<div class="tarjeta tabla-contenedor"><div class="tabla-scroll"><table class="tabla">
+<thead><tr><th>Fecha</th><th>Equipo</th><th>Pieza</th><th>Cantidad</th><th>Solicitante</th><th>Estado</th><th>Acción</th></tr></thead>
+<tbody>
+{% for s in solicitudes %}
+<tr>
+<td>{{ s.fecha_solicitud|fecha }}</td><td>{{ s.equipo_nombre }}</td><td>{{ s.pieza_nombre }}<br><span class="suave">{{ s.sku or '' }}</span></td><td>{{ s.cantidad }}</td><td>{{ s.solicitante_nombre }}</td>
+<td><span class="estado {{ 'activo' if s.estado == 'aprobada' else ('inactivo' if s.estado == 'rechazada' else '') }}">{{ s.estado|capitalize }}</span>{% if s.motivo_rechazo %}<br><span class="suave">{{ s.motivo_rechazo }}</span>{% endif %}</td>
+<td>
+{% if session.rol in ('mentor','coach') and s.estado == 'pendiente' %}
+<form method="post" action="{{ url_for('inventario.resolver_solicitud', solicitud_id=s.id) }}" class="acciones"><input name="motivo" maxlength="200" placeholder="Motivo si rechazas (opcional)" aria-label="Motivo del rechazo"><button class="boton pequeno" name="accion" value="aprobar">Aprobar</button><button class="boton pequeno peligro" name="accion" value="rechazar">Rechazar</button></form>
+{% else %}—{% endif %}
+</td>
+</tr>
+{% else %}<tr><td colspan="7" class="suave">No hay solicitudes.</td></tr>{% endfor %}
+</tbody></table></div></div>
+{% endblock %}

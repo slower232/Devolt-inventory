@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block titulo %}Configuración - Devolt Inventory{% endblock %}
+
+{% block contenido %}
+<div class="encabezado-pagina">
+  <div>
+    <h1>Configuración</h1>
+    <p class="suave">Marcas, categorías y ubicaciones que aparecen al registrar piezas.
+       Solo se puede eliminar lo que ninguna pieza está usando.</p>
+  </div>
+</div>
+
+<div class="config-grid">
+  {% for s in secciones %}
+  <section class="tarjeta">
+    <h2>{{ s.titulo }}</h2>
+
+    <form method="post" action="{{ url_for('configuracion.agregar', tabla=s.tabla) }}" class="fila-catalogo">
+      <input name="nombre" maxlength="60" required placeholder="Nueva {{ s.singular }}" aria-label="Nueva {{ s.singular }}">
+      <button class="boton pequeno" type="submit">Agregar</button>
+    </form>
+
+    <ul class="lista-catalogo">
+      {% for f in s.filas %}
+      <li>
+        <form method="post" action="{{ url_for('configuracion.renombrar', tabla=s.tabla, item_id=f.id) }}" class="fila-catalogo">
+          <input name="nombre" value="{{ f.nombre }}" maxlength="60" required aria-label="Nombre de la {{ s.singular }}">
+          <button class="boton pequeno secundario" type="submit">Guardar</button>
+        </form>
+        <div class="pie-catalogo">
+          <span class="suave">{{ f.en_uso }} pieza(s)</span>
+          {% if f.en_uso == 0 %}
+          <form method="post" action="{{ url_for('configuracion.eliminar', tabla=s.tabla, item_id=f.id) }}" class="form-inline"
+                onsubmit="return confirm('¿Eliminar este elemento?');">
+            <button class="boton pequeno peligro" type="submit">Eliminar</button>
+          </form>
+          {% endif %}
+        </div>
+      </li>
+      {% endfor %}
+    </ul>
+  </section>
+  {% endfor %}
+</div>
+{% endblock %}

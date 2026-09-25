@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% set es_edicion = modo == 'editar' %}
+{% block titulo %}{{ 'Editar usuario' if es_edicion else 'Crear usuario' }} - Devolt Inventory{% endblock %}
+
+{% block contenido %}
+<h1>{{ 'Editar usuario' if es_edicion else 'Crear usuario' }}</h1>
+<p class="suave">
+  {% if es_edicion %}
+    Modifica los datos y permisos de la cuenta.
+  {% else %}
+    La contraseña será temporal y el usuario deberá cambiarla al iniciar sesión.
+  {% endif %}
+</p>
+
+<div class="tarjeta formulario-amplio">
+  <form method="post">
+    <label for="nombre">Nombre</label>
+    <input id="nombre" name="nombre" type="text" maxlength="100" required
+           value="{{ usuario.nombre if usuario else '' }}" autocomplete="name">
+
+    <label for="username">Nombre de usuario</label>
+    <input id="username" name="username" type="text" maxlength="50" required
+           value="{{ usuario.username if usuario else '' }}" autocomplete="username">
+
+    {% if not es_edicion %}
+    <label for="password">Contraseña inicial</label>
+    <input id="password" name="password" type="password" minlength="8" required autocomplete="new-password">
+    <p class="ayuda">Mínimo 8 caracteres. El usuario deberá cambiarla al iniciar sesión.</p>
+    {% endif %}
+
+    <label for="rol">Rol</label>
+    <select id="rol" name="rol" required>
+      <option value="alumno" {% if usuario and usuario.rol == 'alumno' %}selected{% endif %}>Alumno</option>
+      <option value="mentor" {% if usuario and usuario.rol == 'mentor' %}selected{% endif %}>Mentor</option>
+      {% if es_edicion and usuario_original.rol == 'coach' %}
+      <option value="coach" selected>Coach</option>
+      {% endif %}
+    </select>
+
+    <div id="campo-equipo">
+      <label for="equipo_id">Equipo</label>
+      <select id="equipo_id" name="equipo_id">
+        <option value="">Selecciona un equipo</option>
+        {% for equipo in equipos %}
+        <option value="{{ equipo.id }}"
+          {% if usuario and usuario.equipo_id is not none and usuario.equipo_id|string == equipo.id|string %}selected{% endif %}>
+          {{ equipo.nombre }}
+        </option>
+        {% endfor %}
+      </select>
+      <p class="ayuda">Cada alumno pertenece a un solo equipo.</p>
+    </div>
+
+    {% if es_edicion %}
+    <label for="activo">Estado</label>
+    <select id="activo" name="activo">
+      <option value="1" {% if usuario.activo %}selected{% endif %}>Activo</option>
+      <option value="0" {% if not usuario.activo %}selected{% endif %}>Desactivado</option>
+    </select>
+    {% endif %}
+
+    <div class="fila-botones">
+      <button class="boton" type="submit">{{ 'Guardar cambios' if es_edicion else 'Crear usuario' }}</button>
+      <a class="boton secundario" href="{{ url_for('usuarios.lista') }}">Cancelar</a>
+    </div>
+  </form>
+</div>
+
+<script>
+  function actualizarCampoEquipo() {
+    const rol = document.getElementById('rol');
+    const contenedor = document.getElementById('campo-equipo');
+    const equipo = document.getElementById('equipo_id');
+    const esAlumno = rol.value === 'alumno';
+
+    contenedor.style.display = esAlumno ? 'block' : 'none';
+    equipo.required = esAlumno;
+    if (!esAlumno) equipo.value = '';
+  }
+
+  document.getElementById('rol').addEventListener('change', actualizarCampoEquipo);
+  actualizarCampoEquipo();
+</script>
+{% endblock %}

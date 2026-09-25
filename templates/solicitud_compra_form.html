@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block titulo %}Solicitar compra - Devolt Inventory{% endblock %}
+{% block contenido %}
+<div class="encabezado-pagina">
+  <div>
+    <h1>Solicitar compra</h1>
+    <p class="suave">Pide al taller que compre una pieza que no está disponible actualmente.</p>
+  </div>
+  <a class="boton secundario" href="{{ url_for('inventario.solicitudes_compra') }}">Ver mis solicitudes</a>
+</div>
+
+<div class="tarjeta formulario-amplio">
+  {% for error in errores %}<div class="aviso error" role="alert">{{ error }}</div>{% endfor %}
+
+  {% if pieza %}
+  <div class="aviso ok"><strong>{{ pieza.nombre }}</strong> ya existe en el inventario, pero actualmente no tiene stock comunitario.</div>
+  {% endif %}
+
+  <form method="post" action="{{ url_for('inventario.nueva_solicitud_compra') }}{% if datos.pieza_id %}?pieza_id={{ datos.pieza_id }}{% endif %}">
+    {% if datos.pieza_id %}<input type="hidden" name="pieza_id" value="{{ datos.pieza_id }}">{% endif %}
+
+    <label for="nombre">Nombre de la pieza</label>
+    <input id="nombre" name="nombre" maxlength="120" required value="{{ datos.nombre or '' }}" {% if pieza %}readonly{% endif %}>
+
+    <label for="marca_id">Marca</label>
+    <select id="marca_id" name="marca_id" {% if pieza %}disabled{% endif %}>
+      <option value="">Sin marca</option>
+      {% for m in marcas %}<option value="{{ m.id }}" {% if datos.marca_id == m.id %}selected{% endif %}>{{ m.nombre }}</option>{% endfor %}
+    </select>
+    {% if pieza %}<input type="hidden" name="marca_id" value="{{ datos.marca_id or '' }}">{% endif %}
+
+    <label for="sku">SKU</label>
+    <input id="sku" name="sku" maxlength="60" value="{{ datos.sku or '' }}" {% if pieza %}readonly{% endif %}>
+
+    <label for="categoria_id">Categoría</label>
+    <select id="categoria_id" name="categoria_id" {% if pieza %}disabled{% endif %}>
+      <option value="">Sin categoría</option>
+      {% for c in categorias %}<option value="{{ c.id }}" {% if datos.categoria_id == c.id %}selected{% endif %}>{{ c.nombre }}</option>{% endfor %}
+    </select>
+    {% if pieza %}<input type="hidden" name="categoria_id" value="{{ datos.categoria_id or '' }}">{% endif %}
+
+    <label for="cantidad">Cantidad que necesitas</label>
+    <input id="cantidad" name="cantidad" type="number" min="1" value="{{ datos.cantidad or 1 }}" required>
+
+    <label for="costo_unitario_estimado">Costo unitario estimado</label>
+    <input id="costo_unitario_estimado" name="costo_unitario_estimado" type="number" min="0" step="0.01" value="{{ datos.costo_unitario_estimado or '' }}">
+
+    <label for="link">Enlace del producto (opcional)</label>
+    <input id="link" name="link" type="url" placeholder="https://..." value="{{ datos.link or '' }}" {% if pieza %}readonly{% endif %}>
+
+    <label for="motivo">¿Para qué lo necesitas?</label>
+    <textarea id="motivo" name="motivo" maxlength="500" rows="4" style="width:100%;padding:.6rem .7rem;border:1px solid var(--borde);border-radius:6px;font:inherit;resize:vertical;">{{ datos.motivo or '' }}</textarea>
+
+    <div class="fila-botones">
+      <button class="boton" type="submit">Enviar solicitud</button>
+      <a class="boton secundario" href="{{ url_for('inventario.lista') }}">Cancelar</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

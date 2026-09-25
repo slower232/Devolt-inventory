@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block titulo %}{{ 'Editar pieza' if modo == 'editar' else 'Nueva pieza' }} - Devolt Inventory{% endblock %}
+
+{% block contenido %}
+<div class="encabezado-pagina">
+  <div>
+    <h1>{{ 'Editar pieza' if modo == 'editar' else 'Nueva pieza' }}</h1>
+    {% if importada %}
+      <div class="aviso ok">Los datos se importaron desde goBILDA. Revísalos antes de guardar.</div>
+    {% endif %}
+    {% if not es_personal %}
+      <p class="suave">Registra una pieza que tu equipo ya tiene físicamente y que todavía no aparece en el inventario.</p>
+    {% elif modo == 'editar' %}
+      <p class="suave">Las cantidades se cambian con «Agregar unidades» en la página de la pieza.</p>
+    {% else %}
+      <p class="suave">Revisa los datos antes de guardar.</p>
+    {% endif %}
+  </div>
+</div>
+
+<div class="tarjeta formulario-amplio">
+  {% for error in errores %}<div class="aviso error" role="alert">{{ error }}</div>{% endfor %}
+
+  {# "action" viene de la ruta: así el formulario siempre se envía a donde se guarda la pieza #}
+  <form method="post" action="{{ action }}" enctype="multipart/form-data">
+    {% if importada %}<input type="hidden" name="imagen_importada" value="1">{% endif %}
+    <label for="nombre">Nombre</label>
+    <input id="nombre" name="nombre" required maxlength="120" value="{{ datos.nombre or '' }}">
+
+    <label for="marca_id">Marca</label>
+    <select id="marca_id" name="marca_id">
+      <option value="">Sin marca</option>
+      {% for m in marcas %}
+      <option value="{{ m.id }}" {% if datos.marca_id == m.id %}selected{% endif %}>{{ m.nombre }}</option>
+      {% endfor %}
+    </select>
+
+    <label for="sku">SKU</label>
+    <input id="sku" name="sku" maxlength="60" value="{{ datos.sku or '' }}">
+
+    <label for="categoria_id">Categoría</label>
+    <select id="categoria_id" name="categoria_id" required>
+      <option value="">Selecciona una categoría</option>
+      {% for c in categorias %}
+      <option value="{{ c.id }}" {% if datos.categoria_id == c.id %}selected{% endif %}>{{ c.nombre }}</option>
+      {% endfor %}
+    </select>
+
+    <label for="costo_unitario">Costo unitario (aproximado)</label>
+    <input id="costo_unitario" name="costo_unitario" type="number" min="0" step="0.01" value="{{ datos.costo_unitario or '' }}">
+
+    {% if es_personal %}
+      <label for="ubicacion_id">Ubicación</label>
+      <select id="ubicacion_id" name="ubicacion_id" required>
+        <option value="">Selecciona una ubicación</option>
+        {% for u in ubicaciones %}
+        <option value="{{ u.id }}" {% if datos.ubicacion_id == u.id %}selected{% endif %}>{{ u.nombre }}</option>
+        {% endfor %}
+      </select>
+
+      {% if modo != 'editar' %}
+        <label for="cantidad_total">Cantidad que llega</label>
+        <input id="cantidad_total" name="cantidad_total" type="number" min="0" required value="{{ datos.cantidad_total or 0 }}">
+
+        <label for="equipo_id">Asignación inicial</label>
+        <select id="equipo_id" name="equipo_id">
+          <option value="">Stock comunitario</option>
+          {% for e in equipos %}
+          <option value="{{ e.id }}" {% if datos.equipo_id == e.id %}selected{% endif %}>{{ e.nombre }}</option>
+          {% endfor %}
+        </select>
+        <p class="ayuda">Elige un equipo si la compraste solo para él; si no, queda disponible para todos.</p>
+      {% endif %}
+    {% else %}
+      {% if modo != 'editar' %}
+        <label for="cantidad_total">Cantidad que tiene tu equipo</label>
+        <input id="cantidad_total" name="cantidad_total" type="number" min="1" required value="{{ datos.cantidad_total or 1 }}">
+        <p class="ayuda">Las unidades se asignarán automáticamente a {{ session.equipo_nombre }}.</p>
+      {% endif %}
+    {% endif %}
+
+    <label for="imagen_archivo">Imagen</label>
+    {% if datos.imagen %}
+      <img class="miniatura-grande" src="{{ imagen_url(datos.imagen) }}" alt="Vista previa de la pieza">
+      {% if datos.imagen.startswith('http') %}<input type="hidden" name="imagen_externa" value="{{ datos.imagen }}">{% endif %}
+    {% elif modo == 'editar' and pieza.imagen %}
+      <img class="miniatura-grande" src="{{ imagen_url(pieza.imagen) }}" alt="Imagen actual de la pieza">
+    {% endif %}
+    <input id="imagen_archivo" name="imagen_archivo" type="file" accept="image/png,image/jpeg,image/webp,image/gif">
+    <p class="ayuda">PNG, JPG, WEBP o GIF de hasta 4 MB. Una pieza importada puede conservar la imagen pública de goBILDA.</p>
+
+    <label for="link">Enlace del producto</label>
+    <input id="link" name="link" type="url" placeholder="https://..." value="{{ datos.link or '' }}">
+
+    <div class="fila-botones">
+      <button class="boton" type="submit">{{ 'Guardar cambios' if modo == 'editar' else 'Guardar pieza' }}</button>
+      <a class="boton secundario"
+         href="{{ url_for('inventario.detalle', pieza_id=pieza.id) if modo == 'editar' else url_for('inventario.lista') }}">Cancelar</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

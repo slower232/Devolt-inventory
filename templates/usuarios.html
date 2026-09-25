@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block titulo %}Usuarios - Devolt Inventory{% endblock %}
+
+{% block contenido %}
+<div class="encabezado-pagina">
+  <div>
+    <h1>Administración de usuarios</h1>
+    <p class="suave">Crea y administra las cuentas que tienen acceso al taller.</p>
+  </div>
+  <a class="boton" href="{{ url_for('usuarios.nuevo') }}">+ Crear usuario</a>
+</div>
+
+<div class="tarjeta tabla-contenedor">
+  {% if usuarios %}
+  <div class="tabla-scroll">
+    <table class="tabla">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Usuario</th>
+          <th>Rol</th>
+          <th>Equipo</th>
+          <th>Estado</th>
+          <th>Creado</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for usuario in usuarios %}
+        <tr>
+          <td><strong>{{ usuario.nombre }}</strong></td>
+          <td>{{ usuario.username }}</td>
+          <td><span class="etiqueta">{{ usuario.rol|capitalize }}</span></td>
+          <td>{{ usuario.equipo_nombre or 'Todos los equipos' }}</td>
+          <td>
+            {% if usuario.activo %}
+              <span class="estado activo">Activo</span>
+            {% else %}
+              <span class="estado inactivo">Desactivado</span>
+            {% endif %}
+          </td>
+          <td>{{ usuario.fecha_creacion|fecha }}</td>
+          <td class="acciones">
+            <a class="boton pequeno" href="{{ url_for('usuarios.editar', usuario_id=usuario.id) }}">Editar</a>
+
+            {% if usuario.rol != 'coach' and usuario.activo %}
+            <form method="post" action="{{ url_for('usuarios.cambiar_estado', usuario_id=usuario.id) }}" class="form-inline"
+                  onsubmit="return confirm('¿Desactivar esta cuenta? El usuario ya no podrá iniciar sesión.');">
+              <input type="hidden" name="activo" value="0">
+              <button class="boton pequeno peligro" type="submit">Desactivar</button>
+            </form>
+            {% elif not usuario.activo %}
+            <form method="post" action="{{ url_for('usuarios.cambiar_estado', usuario_id=usuario.id) }}" class="form-inline">
+              <input type="hidden" name="activo" value="1">
+              <button class="boton pequeno secundario" type="submit">Reactivar</button>
+            </form>
+            {% endif %}
+
+            {% if usuario.id != session.usuario_id and usuario.activo %}
+            <form method="post" action="{{ url_for('usuarios.restablecer_password', usuario_id=usuario.id) }}" class="form-inline"
+                  onsubmit="return confirm('¿Generar una nueva contraseña temporal para este usuario?');">
+              <button class="boton pequeno secundario" type="submit">Restablecer contraseña</button>
+            </form>
+            {% endif %}
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+    <p>No hay usuarios registrados.</p>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block titulo %}Historial - Devolt Inventory{% endblock %}
+{% block contenido %}
+<div class="encabezado-pagina">
+  <div>
+    <h1>Historial de operaciones</h1>
+    <p class="suave">Bitácora de solicitudes, devoluciones, compras y movimientos de inventario.</p>
+  </div>
+</div>
+
+<form class="tarjeta filtros-inventario" method="get" action="{{ url_for('historial.lista') }}">
+  <div class="filtros-grid historial-filtros">
+    <div class="campo-busqueda">
+      <label for="q">Buscar</label>
+      <input id="q" name="q" type="search" value="{{ filtros.q or '' }}" placeholder="Pieza, SKU, usuario o equipo...">
+    </div>
+    <div>
+      <label for="tipo">Operación</label>
+      <select id="tipo" name="tipo">
+        <option value="">Todas</option>
+        {% for t in tipos %}
+        <option value="{{ t.tipo }}" {% if filtros.tipo == t.tipo %}selected{% endif %}>{{ nombres_tipo.get(t.tipo, t.tipo|replace('_', ' ')|capitalize) }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div>
+      <label for="equipo_id">Equipo</label>
+      <select id="equipo_id" name="equipo_id">
+        <option value="">Todos</option>
+        {% for e in equipos %}<option value="{{ e.id }}" {% if filtros.equipo_id|string == e.id|string %}selected{% endif %}>{{ e.nombre }}</option>{% endfor %}
+      </select>
+    </div>
+    <div>
+      <label for="usuario_id">Usuario</label>
+      <select id="usuario_id" name="usuario_id">
+        <option value="">Todos</option>
+        {% for u in usuarios %}<option value="{{ u.id }}" {% if filtros.usuario_id|string == u.id|string %}selected{% endif %}>{{ u.nombre }}</option>{% endfor %}
+      </select>
+    </div>
+  </div>
+  <div class="fila-botones">
+    <button class="boton" type="submit">Filtrar</button>
+    <a class="boton secundario" href="{{ url_for('historial.lista') }}">Limpiar</a>
+    <span class="resultado-filtros">{{ historial|length }} operación(es) mostrada(s)</span>
+  </div>
+</form>
+
+<div class="tarjeta tabla-contenedor">
+  <div class="tabla-scroll">
+    <table class="tabla historial-tabla">
+      <thead>
+        <tr><th>Fecha</th><th>Operación</th><th>Usuario</th><th>Equipo</th><th>Pieza</th><th>Cantidad</th><th>Motivo / detalle</th></tr>
+      </thead>
+      <tbody>
+      {% for h in historial %}
+      <tr>
+        <td>{{ h.fecha|fecha }}</td>
+        <td><span class="estado historial-{{ h.tipo }}">{{ nombres_tipo.get(h.tipo, h.tipo|replace('_', ' ')|capitalize) }}</span></td>
+        <td>{{ h.usuario_nombre }}</td>
+        <td>{{ h.equipo_nombre or '—' }}</td>
+        <td>
+          {% if h.pieza_id %}<strong>{{ h.pieza_nombre or 'Pieza eliminada' }}</strong>{% else %}—{% endif %}
+          {% if h.sku %}<br><span class="suave">{{ h.sku }}</span>{% endif %}
+        </td>
+        <td>{{ h.cantidad if h.cantidad is not none else '—' }}</td>
+        <td>{{ h.motivo or '—' }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="7" class="suave">No hay operaciones que coincidan con los filtros.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

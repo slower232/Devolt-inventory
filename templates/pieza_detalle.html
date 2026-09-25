@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+{% block titulo %}{{ pieza.nombre }} - Devolt Inventory{% endblock %}
+
+{% block contenido %}
+<div class="encabezado-pagina">
+  <div>
+    <h1>{{ pieza.nombre }}</h1>
+    <p class="suave">{{ pieza.marca_nombre or 'Sin marca' }} · SKU {{ pieza.sku or '—' }}</p>
+  </div>
+  <div class="fila-botones">
+    {% if es_personal %}
+    <a class="boton secundario" href="{{ url_for('inventario.editar', pieza_id=pieza.id) }}">Editar ficha</a>
+    {% endif %}
+    <a class="boton secundario" href="{{ url_for('inventario.lista') }}">Volver al inventario</a>
+  </div>
+</div>
+
+<div class="detalle-grid">
+  <div class="columna">
+    <section class="tarjeta">
+      {% if pieza.imagen %}<img class="imagen-pieza" src="{{ imagen_url(pieza.imagen) }}" alt="{{ pieza.nombre }}">{% endif %}
+      <h2>Información</h2>
+      <p><strong>Categoría:</strong> {{ pieza.categoria_nombre or '—' }}</p>
+      <p><strong>Ubicación:</strong> {{ pieza.ubicacion_nombre or 'Sin ubicación todavía' }}</p>
+      <p><strong>Costo unitario:</strong> ${{ '%.2f'|format(pieza.costo_unitario) }}</p>
+      <p><strong>Registrada:</strong> {{ pieza.fecha_registro|fecha }}</p>
+      {% if pieza.link %}<p><a href="{{ pieza.link }}" target="_blank" rel="noopener noreferrer">Ver producto original</a></p>{% endif %}
+    </section>
+
+    <section class="tarjeta">
+      <h2>Dónde están las {{ pieza.cantidad_total }} unidades</h2>
+      <table class="tabla compacta">
+        <thead><tr><th>Lugar</th><th>Unidades</th>{% if es_personal %}<th>Acción</th>{% endif %}</tr></thead>
+        <tbody>
+          <tr><td>Stock comunitario</td><td><strong>{{ pieza.disponible }}</strong></td>{% if es_personal %}<td>—</td>{% endif %}</tr>
+          {% for a in asignaciones %}
+          <tr>
+            <td>{{ a.nombre }}</td><td>{{ a.cantidad }}</td>
+            {% if es_personal %}
+            <td>
+              {% if a.cantidad > 0 %}
+              <form method="post" action="{{ url_for('inventario.devolver', pieza_id=pieza.id) }}" class="acciones">
+                <input type="hidden" name="equipo_id" value="{{ a.id }}">
+                <input name="cantidad" type="number" min="1" max="{{ a.cantidad }}" value="1" aria-label="Cantidad a devolver">
+                <button class="boton pequeno secundario" type="submit">Devolver</button>
+              </form>
+              {% else %}—{% endif %}
+            </td>
+            {% endif %}
+          </tr>
+          {% else %}
+          <tr><td colspan="{{ 3 if es_personal else 2 }}" class="suave">No hay piezas asignadas a equipos.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+  </div>
+
+  <div class="columna">
+    {% if not es_personal %}
+    <section class="tarjeta">
+      <h2>Solicitar piezas</h2>
+      <p class="suave">La solicitud la revisa un mentor o el Coach. Las piezas pasan a tu equipo cuando la aprueban.</p>
+      {% if pieza.disponible > 0 %}
+      <form method="post" action="{{ url_for('inventario.solicitar', pieza_id=pieza.id) }}">
+        <label for="cantidad">Cantidad</label>
+        <input id="cantidad" name="cantidad" type="number" min="1" max="{{ pieza.disponible }}" value="1" required>
+        <button class="boton" type="submit">Enviar solicitud</button>
+      </form>
+      {% else %}
+      <p class="aviso error">No hay piezas disponibles en el stock comunitario.</p>
+      <form method="post" action="{{ url_for('inventario.solicitar_compra_desde_pieza', pieza_id=pieza.id) }}">
+        <button class="boton" type="submit">Solicitar compra de esta pieza</button>
+      </form>
+      {% endif %}
+    </section>
+
+    {% set propia = namespace(cantidad=0) %}
+    {% for a in asignaciones %}{% if a.id == session.equipo_id %}{% set propia.cantidad = a.cantidad %}{% endif %}{% endfor %}
+    {% if propia.cantidad > 0 %}
+    <section class="tarjeta">
+      <h2>Devolver piezas al stock</h2>
+      <p class="suave">Tienes <strong>{{ propia.cantidad }}</strong> unidad(es) de esta pieza. Puedes regresar las que ya no necesite tu equipo.</p>
+      <form method="post" action="{{ url_for('inventario.devolver', pieza_id=pieza.id) }}">
+        <label for="cantidad_devolucion">Cantidad a devolver</label>
+        <input id="cantidad_devolucion" name="cantidad" type="number" min="1" max="{{ propia.cantidad }}" value="1" required>
+        <button class="boton secundario" type="submit">Devolver al stock</button>
+      </form>
+    </section>
+    {% endif %}
+    {% else %}
+    <section class="tarjeta">
+      <h2>Agregar unidades</h2>
+      <p class="suave">Úsalo cuando llegue una compra o se encuentren más piezas. Queda registrado en el historial.</p>
+      <form method="post" action="{{ url_for('inventario.agregar_unidades', pieza_id=pieza.id) }}">
+        <label for="cantidad_agregar">Cantidad</label>
+        <input id="cantidad_agregar" name="cantidad" type="number" min="1" value="1" required>
+        <label for="equipo_id">Van a</label>
+        <select id="equipo_id" name="equipo_id">
+          <option value="">Stock comunitario</option>
+          {% for e in equipos %}<option value="{{ e.id }}">{{ e.nombre }}</option>{% endfor %}
+        </select>
+        <button class="boton" type="submit">Agregar unidades</button>
+      </form>
+    </section>
+
+    <section class="tarjeta tarjeta-peligro">
+      <h2>Retirar unidades</h2>
+      <p class="suave">Mentores y Coach pueden retirar piezas que se hayan perdido, dañado o dado de baja. El cambio queda registrado.</p>
+      <form method="post" action="{{ url_for('inventario.retirar', pieza_id=pieza.id) }}">
+        <label for="cantidad_retirar">Cantidad</label>
+        <input id="cantidad_retirar" name="cantidad" type="number" min="1" max="{{ pieza.cantidad_total }}" value="1" required>
+        <label for="equipo_retirar">Retirar de</label>
+        <select id="equipo_retirar" name="equipo_id">
+          <option value="">Stock comunitario</option>
+          {% for e in equipos %}<option value="{{ e.id }}">{{ e.nombre }}</option>{% endfor %}
+        </select>
+        <label for="motivo_retirar">Motivo</label>
+        <input id="motivo_retirar" name="motivo" maxlength="300" placeholder="Ej. Pieza dañada o extraviada">
+        <button class="boton peligro" type="submit">Retirar unidades</button>
+      </form>
+    </section>
+
+    <section class="tarjeta tarjeta-peligro">
+      <h2>Eliminar pieza por completo</h2>
+      <p class="suave">Desactiva la ficha y retira todas las unidades. Para evitar perder piezas que sigan en un equipo, primero deben estar todas en stock comunitario.</p>
+      <form method="post" action="{{ url_for('inventario.retirar', pieza_id=pieza.id) }}" onsubmit="return confirm('¿Seguro que quieres retirar esta pieza por completo? Esta acción no se puede deshacer desde la interfaz.');">
+        <input type="hidden" name="retirar_todo" value="1">
+        <label for="motivo_eliminar">Motivo</label>
+        <input id="motivo_eliminar" name="motivo" maxlength="300" placeholder="Ej. Pieza descontinuada">
+        <button class="boton peligro" type="submit">Eliminar pieza por completo</button>
+      </form>
+    </section>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

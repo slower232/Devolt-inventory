@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block titulo %}Inventario - Devolt Inventory{% endblock %}
+
+{% block contenido %}
+<div class="encabezado-pagina">
+  <div>
+    <h1>Inventario</h1>
+    <p class="suave">Busca por nombre, SKU o marca y filtra por categoría, ubicación y disponibilidad.</p>
+  </div>
+  <div class="fila-botones">
+    <a class="boton" href="{{ url_for('inventario.importar_link') }}">+ Importar desde goBILDA</a>
+    <a class="boton secundario" href="{{ url_for('inventario.nuevo') }}">+ Agregar manualmente</a>
+  </div>
+</div>
+
+<form class="tarjeta filtros-inventario" method="get" action="{{ url_for('inventario.lista') }}">
+  <div class="filtros-grid">
+    <div class="campo-busqueda">
+      <label for="q">Buscar pieza</label>
+      <input id="q" name="q" type="search" value="{{ filtros.q or '' }}" placeholder="Nombre, SKU o marca...">
+    </div>
+    <div>
+      <label for="marca_id">Marca</label>
+      <select id="marca_id" name="marca_id">
+        <option value="">Todas</option>
+        {% for m in marcas %}<option value="{{ m.id }}" {% if filtros.marca_id|string == m.id|string %}selected{% endif %}>{{ m.nombre }}</option>{% endfor %}
+      </select>
+    </div>
+    <div>
+      <label for="categoria_id">Categoría</label>
+      <select id="categoria_id" name="categoria_id">
+        <option value="">Todas</option>
+        {% for c in categorias %}<option value="{{ c.id }}" {% if filtros.categoria_id|string == c.id|string %}selected{% endif %}>{{ c.nombre }}</option>{% endfor %}
+      </select>
+    </div>
+    <div>
+      <label for="ubicacion_id">Ubicación</label>
+      <select id="ubicacion_id" name="ubicacion_id">
+        <option value="">Todas</option>
+        {% for u in ubicaciones %}<option value="{{ u.id }}" {% if filtros.ubicacion_id|string == u.id|string %}selected{% endif %}>{{ u.nombre }}</option>{% endfor %}
+      </select>
+    </div>
+    <div>
+      <label for="disponibilidad">Disponibilidad</label>
+      <select id="disponibilidad" name="disponibilidad">
+        <option value="">Todas</option>
+        <option value="disponible" {% if filtros.disponibilidad == 'disponible' %}selected{% endif %}>Con stock</option>
+        <option value="agotada" {% if filtros.disponibilidad == 'agotada' %}selected{% endif %}>Agotadas</option>
+      </select>
+    </div>
+  </div>
+  <div class="fila-botones">
+    <button class="boton" type="submit">Buscar y filtrar</button>
+    <a class="boton secundario" href="{{ url_for('inventario.lista') }}">Limpiar</a>
+    <span class="resultado-filtros">{{ piezas|length }} resultado(s)</span>
+  </div>
+</form>
+
+<div class="tarjeta tabla-contenedor">
+  <div class="tabla-scroll">
+    <table class="tabla">
+      <thead>
+        <tr><th></th><th>Pieza</th><th>SKU</th><th>Categoría</th><th>Disponible / total</th><th>Ubicación</th><th></th></tr>
+      </thead>
+      <tbody>
+      {% for pieza in piezas %}
+      <tr>
+        <td>
+          {% if pieza.imagen %}<img class="miniatura" src="{{ imagen_url(pieza.imagen) }}" alt="">
+          {% else %}<span class="miniatura vacia"></span>{% endif %}
+        </td>
+        <td><strong>{{ pieza.nombre }}</strong><br><span class="suave">{{ pieza.marca_nombre or 'Sin marca' }}</span></td>
+        <td>{{ pieza.sku or '—' }}</td>
+        <td>{{ pieza.categoria_nombre or '—' }}</td>
+        <td><strong>{{ pieza.disponible }}</strong> / {{ pieza.cantidad_total }}</td>
+        <td>{{ pieza.ubicacion_nombre or '—' }}</td>
+        <td><a class="boton pequeno secundario" href="{{ url_for('inventario.detalle', pieza_id=pieza.id) }}">Ver</a></td>
+      </tr>
+      {% else %}
+      <tr><td colspan="7" class="suave">Todavía no hay piezas en el inventario.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
